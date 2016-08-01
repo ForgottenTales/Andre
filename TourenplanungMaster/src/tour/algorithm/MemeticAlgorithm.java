@@ -79,15 +79,44 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		
 		// @TODO: Hier 4 aus population nochmal lokal optimieren
 		
-		
-		
 		return population;
 	}
 
 	@Override
-	public List<Tour> chooseParents(List<Tour> population) {
-		// TODO Auto-generated method stub
-		return null;
+	public List<Tour> chooseParents(List<Tour> population) 
+	{
+		Random randomizer = new Random();
+		double fitnessSum = 0;
+		List<Tour> parents = new ArrayList<Tour>();
+		for (Tour key : population)
+		{
+			fitnessSum += key.getFitness();
+		}
+		for (int u = 0; u < 2; u++)
+		{
+			double p = fitnessSum / 5; // hier verbunden mit
+			double start = randomizer.nextDouble()*p;
+			double[] pointers = 
+				{
+						start + 0*p, // da
+						start + 1*p,
+						start + 2*p,
+						start + 3*p,
+						start + 4*p,
+				};
+			double currentFitnessSum = 0;
+			for (double pet : pointers)
+			{
+				int i = 0;
+				while (currentFitnessSum < pet)
+				{
+					currentFitnessSum += population.get(i).getFitness();
+					i++;
+				}
+				parents.add(population.get(i));
+			}
+		}
+		return parents;
 	}
 
 	@Override
@@ -128,21 +157,108 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		{
 			if (globalRoute.size() > cut)
 			{
-				subRoutes.add(globalRoute.subList(0, cut));
-				globalRoute.removeAll(subRoutes.get(subRoutes.size()-1));
+				List<Integer> tmp = new ArrayList<Integer>(globalRoute.subList(0, cut));
+				if (!tmp.isEmpty())
+				{
+					subRoutes.add(tmp);
+					globalRoute.removeAll(subRoutes.get(subRoutes.size()-1));
+				}
+			} else {
+				List<Integer> tmp = new ArrayList<Integer>(globalRoute);
+				if (!tmp.isEmpty())
+				{
+					subRoutes.add(tmp);
+				}
+				globalRoute.clear();
 			}
+		}
+		if (globalRoute.size() > 0)
+		{
+			List<Integer> tmp = new ArrayList<Integer>(globalRoute);
+			if (!tmp.isEmpty())
+			{
+				subRoutes.add(tmp);
+			}
+			globalRoute.clear();
 		}
 		entry.setSubRoutes(subRoutes);
 		
-		Integer previousKey = 0;
-		double pathSum = 0;
-		for (Integer key : entry.getRoute())
+		double[] subRouteSums = new double[entry.getSubRoutes().size()];
+		double[] subRoutePenalty = new double[entry.getSubRoutes().size()];
+		double[] values = new double[entry.getSubRoutes().size()];
+		
+		for (int i = 0; i < subRouteSums.length; i++)
 		{
-			double pathTime = pathMatrice[previousKey][key];
-			pathSum += pathTime;
-			previousKey = key;
+			subRouteSums[i] = 0;
+			subRoutePenalty[i] = 0;
+			values[i] = 0;
+			for (Integer key : entry.getSubRoutes().get(i))
+			{
+				subRouteSums[i] += comTimes[key-1];
+			}
 		}
-		value = pathSum;
+		int length = subRouteSums.length;
+		if (length == 3)
+		{
+			if (subRouteSums[0] <= subRouteSums[1])
+			{
+				subRouteSums[2] += subRouteSums[0];
+			} else {
+				subRouteSums[2] += subRouteSums[1];
+			}
+		} else if (length == 4)
+		{
+			if (subRouteSums[0] <= subRouteSums[1])
+			{
+				subRouteSums[2] += subRouteSums[0];
+				if (subRouteSums[2] < subRouteSums[1])
+				{
+					subRouteSums[3] += subRouteSums[2];
+				} else {
+					subRouteSums[3] += subRouteSums[1];
+				}
+			} else 
+			{
+				subRouteSums[2] += subRouteSums[1];
+				if (subRouteSums[2] < subRouteSums[0])
+				{
+					subRouteSums[3] += subRouteSums[2];
+				} else 
+				{
+					subRouteSums[3] += subRouteSums[0];
+				}
+			}
+		}
+	
+		double penaltySum = 0;
+		for (int i = 0; i < subRouteSums.length; i++)
+		{
+			entry.getSubRouteComTimes().add(subRouteSums[i]);
+			Integer previousKey = 0;
+			for (Integer key : entry.getSubRoutes().get(i))
+			{
+				double pathTime = pathMatrice[previousKey][key];
+				subRouteSums[i] += pathTime;
+				if (subRouteSums[i] > maxTimes[key -1])
+				{
+					subRoutePenalty[i] += subRouteSums[i] - maxTimes[key-1];
+				}
+				previousKey = key;
+			}
+			penaltySum += subRoutePenalty[i];
+			entry.setPenaltySum(entry.getPenaltySum() + subRoutePenalty[i]);
+		}
+		
+		double maxSum = Double.MIN_VALUE; 
+		for (int i = 0; i < length; i++)
+		{
+			if (subRouteSums[i] > maxSum)
+			{
+				maxSum = subRouteSums[i];
+			}
+		}
+		value = maxSum + penaltySum;
+		
 		entry.setFitness(value);
 		return entry;
 	}

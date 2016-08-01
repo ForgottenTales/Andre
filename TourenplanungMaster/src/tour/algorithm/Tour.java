@@ -8,6 +8,9 @@ public class Tour {
 	private List<Integer> route = new ArrayList<Integer>();
 	private List<Integer> cuts = new ArrayList<Integer>();
 	private List<List<Integer>> subRoutes = null;
+	private List<Double> subRouteComTimes = new ArrayList<Double>();
+	
+	private double penaltySum = 0;
 	
 	private double fitness = 0;
 	
@@ -36,6 +39,18 @@ public class Tour {
 	}
 	public void setSubRoutes(List<List<Integer>> subRoutes) {
 		this.subRoutes = subRoutes;
+	}
+	public double getPenaltySum() {
+		return penaltySum;
+	}
+	public void setPenaltySum(double penaltySum) {
+		this.penaltySum = penaltySum;
+	}
+	public List<Double> getSubRouteComTimes() {
+		return subRouteComTimes;
+	}
+	public void setSubRouteComTimes(List<Double> subRouteComTimes) {
+		this.subRouteComTimes = subRouteComTimes;
 	}
 	
 }

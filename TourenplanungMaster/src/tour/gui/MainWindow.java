@@ -5,6 +5,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.swing.BoxLayout;
@@ -54,6 +55,7 @@ public class MainWindow extends JFrame {
 		step.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				handler.doStep();
 			}
 		});
 		
@@ -64,22 +66,31 @@ public class MainWindow extends JFrame {
 				handler = new AlgorithmHandler(algorithm);
 				output.append("--------------------------------------\n");
 				output.append("Initial Population:\n");
+				
 				List<Tour> pop = handler.getPopulation();
-				for (Tour key : pop)
+				for (int i = 0; i < pop.size(); i++)
 				{
-					output.append(Arrays.toString(key.getRoute().toArray()) + " " + Arrays.toString(key.getCuts().toArray()) + " " + key.getFitness() + "  \n");
-					if (key.getSubRoutes() != null)
-						for (List<Integer> sR : key.getSubRoutes())
-						{
-							output.append("    ");
-							for (int i = 0; i < sR.size(); i++)
-							{
-								output.append(sR.get(i) + " ");
-							}
-						}
-					else {
-						System.out.println("fehler");
+					Tour key = pop.get(i);
+					output.append(Arrays.toString(key.getRoute().toArray()) + " " + Arrays.toString(key.getCuts().toArray()) + " " + key.getFitness() + " Pen:  " + key.getPenaltySum() + "\n");
+					
+					int j = 0;
+					Iterator<List<Integer>> iterator = key.getSubRoutes().iterator();
+					while(iterator.hasNext())
+					{
+						List<Integer> sub = iterator.next();
+						output.append("    " + Arrays.toString(sub.toArray())+ "com: " + key.getSubRouteComTimes().get(j) + "\n");
+						j++;
 					}
+					//List<List<Integer>> subs = key.getSubRoutes();
+					//List<Integer> sub = subs.get(0);
+					// sub.size();
+					// for (List<Integer> sR : key.getSubRoutes())
+					//{
+						//sR.size();
+						//output.append("    ");
+//						output.append(""+key.getSubRoutes().get(0));
+					//	output.append("\n");
+					//}
 				}
 			}
 		});

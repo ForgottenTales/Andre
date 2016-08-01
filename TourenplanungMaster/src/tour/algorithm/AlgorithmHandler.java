@@ -14,7 +14,6 @@ public class AlgorithmHandler {
 		for (Tour key : population)
 		{
 			algorithm.updateEntry(key);
-			System.out.println(key.getSubRoutes().size());
 		}
 	}
 
