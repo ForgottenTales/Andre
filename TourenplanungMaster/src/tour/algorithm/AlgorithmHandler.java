@@ -30,7 +30,7 @@ public class AlgorithmHandler {
 	public void doStep()
 	{
 		List<Tour> parents = algorithm.chooseParents(population);
-		List<Tour> children = algorithm.makeChildren(parents);
+		List<Tour> children = algorithm.makeChildren(parents);	
 		population.addAll(children);
 		population = algorithm.mutate(population);
 		for (Tour key : population)

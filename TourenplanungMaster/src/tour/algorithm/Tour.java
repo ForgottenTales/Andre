@@ -3,7 +3,7 @@ package tour.algorithm;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Tour {
+public class Tour implements Comparable<Tour>{
 
 	private List<Integer> route = new ArrayList<Integer>();
 	private List<Integer> cuts = new ArrayList<Integer>();
@@ -52,5 +52,10 @@ public class Tour {
 	public void setSubRouteComTimes(List<Double> subRouteComTimes) {
 		this.subRouteComTimes = subRouteComTimes;
 	}
+	@Override
+	public int compareTo(Tour o) {
+		return (int) (this.getFitness() - o.getFitness());
+	}
+	
 	
 }

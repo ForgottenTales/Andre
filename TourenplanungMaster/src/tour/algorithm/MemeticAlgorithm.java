@@ -1,12 +1,15 @@
 package tour.algorithm;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
 public class MemeticAlgorithm implements IAlgorithm<Tour> {
 
+	private int generationCounter = 0;
 	private static final int POP_SIZE = 20;
+	
 	
 	private double[][] pathMatrice = 
 								   {
@@ -94,7 +97,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		}
 		for (int u = 0; u < 2; u++)
 		{
-			double p = fitnessSum / 5; // hier verbunden mit
+			double p = fitnessSum / 5.0; // hier verbunden mit
 			double start = randomizer.nextDouble()*p;
 			double[] pointers = 
 				{
@@ -105,47 +108,148 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 						start + 4*p,
 				};
 			double currentFitnessSum = 0;
+			int i = -1;
 			for (double pet : pointers)
 			{
-				int i = 0;
-				while (currentFitnessSum < pet)
+				while (currentFitnessSum <= pet)
 				{
-					currentFitnessSum += population.get(i).getFitness();
+					currentFitnessSum += population.get(i+1).getFitness();
 					i++;
 				}
-				parents.add(population.get(i));
+				Tour parent = new Tour();
+				parent.setRoute(new ArrayList<>(population.get(i).getRoute()));
+				parent.setCuts(new ArrayList<>(population.get(i).getCuts()));
+				parents.add(parent);
 			}
 		}
 		return parents;
 	}
 
 	@Override
-	public List<Tour> makeChildren(List<Tour> population) {
-		// TODO Auto-generated method stub
-		return null;
+	public List<Tour> makeChildren(List<Tour> parents) {
+		Random rand = new Random();
+		List<Tour> children = new ArrayList<Tour>();
+		for (int i = 0; i < parents.size(); i = i +2 )
+		{
+			Tour parent1 = parents.get(i);
+			Tour parent2 = parents.get(i+1);
+			
+			int dx1 = rand.nextInt(16);
+			int dx2 = rand.nextInt(16);
+			
+			int swap = Math.min(dx1, dx2);
+			dx2 = Math.max(dx1, dx2);
+			dx1 = swap;
+			
+			Tour child = new Tour();
+			List<Integer> route = new ArrayList<Integer>();
+			List<Integer> routeNew = new ArrayList<Integer>();
+			List<Integer> donts = new ArrayList<Integer>();
+			for (int j = 0; j < 16; j++)
+			{
+				if (j >= dx1 -1 && j <= dx2 -1)
+				{
+					donts.add(parent1.getRoute().get(j));
+				} 
+			}
+			for (int j = 0; j < 16; j++)
+			{
+				if (j >= dx1 -1 && j <= dx2 -1)
+				{
+					route.add(parent1.getRoute().get(j));
+				} else {
+					for (int u = 0; u < 16; u++)
+					{
+						int entry = parent2.getRoute().get(u);
+						if (donts.contains(entry))
+						{
+							continue;
+						}
+						route.add(entry);
+						donts.add(entry);
+						break;
+					}
+				}
+			}
+			routeNew = route;
+			
+//			List<Integer> parent2Copy = new ArrayList<Integer>();
+//			for (int j = 0; j < 16; j++)
+//			{
+//				if (route.get(j) == -1)
+//				{	
+//					parent2Copy.add(parent2.getRoute().get(j));
+//				}
+//			}
+//			for (int j = 0; j < 16; j++)
+//			{
+//				if (route.get(j) == -1)
+//				{
+//					// Ersatz finden.
+//					boolean finisher = true;
+//					for (int z = 0; z < 16; z++)
+//					{
+//						int loc = (z+j)%parent2Copy.size();
+//						int potV = parent2Copy.get(loc);
+//						if (route.get(loc) == -1)
+//						{
+//							continue;
+//						}
+//						if (routeNew.contains(potV))
+//						{
+//							continue;
+//						}
+//						routeNew.add(potV);
+//						parent2Copy.remove(loc);
+//						finisher = false;
+//						break;
+//					}
+//					if (!finisher)
+//					{
+//						System.out.println("Kacke gelaufen");
+//					}
+//				} else {
+//					if (routeNew.contains(route.get(j)))
+//					{
+//						System.out.println("panic!!!! c " + j);
+//						System.out.println(Arrays.toString(parent2.getRoute().toArray()));
+//						System.out.println(Arrays.toString(route.toArray()));
+//						System.out.println(Arrays.toString(routeNew.toArray()));
+//					}
+//					routeNew.add(route.get(j));
+//				}
+//			}
+			child.setRoute(routeNew);
+			
+			// CrossOver Cuts here
+			child.setCuts(parent1.getCuts());
+			children.add(child);
+		}
+		generationCounter++;
+		return children;
 	}
 
 	@Override
 	public List<Tour> mutate(List<Tour> population) {
 		// TODO Auto-generated method stub
-		return null;
+		return population;
 	}
 
 	@Override
 	public List<Tour> localOptimization(List<Tour> population) {
 		// TODO Auto-generated method stub
-		return null;
+		return population;
 	}
 
 	@Override
 	public List<Tour> selectNewPopulation(List<Tour> population) {
-		// TODO Auto-generated method stub
-		return null;
+		Collections.sort(population);
+		return population.subList(0, 20);
 	}
 
 	@Override
 	public boolean isFinished(List<Tour> population) {
-		return false;
+		return generationCounter > 15000;
 	}
 
 	@Override
@@ -229,7 +333,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 				}
 			}
 		}
-	
+		entry.setPenaltySum(0);
 		double penaltySum = 0;
 		for (int i = 0; i < subRouteSums.length; i++)
 		{

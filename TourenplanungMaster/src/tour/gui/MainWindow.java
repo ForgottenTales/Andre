@@ -3,7 +3,6 @@ package tour.gui;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -36,7 +35,7 @@ public class MainWindow extends JFrame {
 		setSize(600, 500);
 		setVisible(true);
 		setLayout(new BorderLayout());
-		
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		JButton startButton = new JButton("Run - complete");
 		JButton init = new JButton("init");
 		JButton step = new JButton("do Step");
@@ -46,6 +45,7 @@ public class MainWindow extends JFrame {
 				algorithm = new MemeticAlgorithm();
 				handler = new AlgorithmHandler(algorithm);
 				Tour key = handler.findBestSolution();
+				printTour(key);
 				output.append("--------------------------------------\n");
 				output.append("Best Solution:\n");
 				output.append(Arrays.toString(key.getRoute().toArray()) + " " + Arrays.toString(key.getCuts().toArray()) + "  \n");
@@ -56,6 +56,8 @@ public class MainWindow extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				handler.doStep();
+				Tour tour = handler.getPopulation().get(0);
+				printTour(tour);
 			}
 		});
 		
@@ -71,16 +73,7 @@ public class MainWindow extends JFrame {
 				for (int i = 0; i < pop.size(); i++)
 				{
 					Tour key = pop.get(i);
-					output.append(Arrays.toString(key.getRoute().toArray()) + " " + Arrays.toString(key.getCuts().toArray()) + " " + key.getFitness() + " Pen:  " + key.getPenaltySum() + "\n");
-					
-					int j = 0;
-					Iterator<List<Integer>> iterator = key.getSubRoutes().iterator();
-					while(iterator.hasNext())
-					{
-						List<Integer> sub = iterator.next();
-						output.append("    " + Arrays.toString(sub.toArray())+ "com: " + key.getSubRouteComTimes().get(j) + "\n");
-						j++;
-					}
+					printTour(key);
 					//List<List<Integer>> subs = key.getSubRoutes();
 					//List<Integer> sub = subs.get(0);
 					// sub.size();
@@ -112,5 +105,17 @@ public class MainWindow extends JFrame {
 		add(buttons,BorderLayout.WEST);
 		add(jp, BorderLayout.CENTER);
 	}
-	
+
+	private void printTour(Tour key)
+	{
+		output.append(Arrays.toString(key.getRoute().toArray()) + " " + Arrays.toString(key.getCuts().toArray()) + " " + key.getFitness() + " Pen:  " + key.getPenaltySum() + "\n");
+		int j = 0;
+		Iterator<List<Integer>> iterator = key.getSubRoutes().iterator();
+		while(iterator.hasNext())
+		{
+			List<Integer> sub = iterator.next();
+			output.append("    " + Arrays.toString(sub.toArray())+ "com: " + key.getSubRouteComTimes().get(j) + "\n");
+			j++;
+		}
+	}
 }

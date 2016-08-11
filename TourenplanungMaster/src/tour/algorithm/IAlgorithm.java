@@ -8,7 +8,7 @@ public interface IAlgorithm<T> {
 	
 	public List<T> chooseParents(List<T> population);
 	
-	public List<T> makeChildren(List<T> population);
+	public List<T> makeChildren(List<T> parents);
 	
 	public List<T> mutate(List<T> population);
 	
