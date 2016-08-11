@@ -31,13 +31,13 @@ public class AlgorithmHandler {
 	{
 		List<Tour> parents = algorithm.chooseParents(population);
 		List<Tour> children = algorithm.makeChildren(parents);	
-		population.addAll(children);
-		population = algorithm.mutate(population);
-		for (Tour key : population)
+		children = algorithm.mutate(children);
+		for (Tour key : children)
 		{
 			key = algorithm.updateEntry(key);
 		}
-		population = algorithm.localOptimization(population);
+		children = algorithm.localOptimization(children);
+		population.addAll(children);
 		for (Tour key : population)
 		{
 			key = algorithm.updateEntry(key);

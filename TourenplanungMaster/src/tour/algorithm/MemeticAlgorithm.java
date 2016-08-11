@@ -9,7 +9,8 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 
 	private int generationCounter = 0;
 	private static final int POP_SIZE = 20;
-	
+	private double mutateBorder = 0.6;
+	private double mutationsReichweite = 2;
 	
 	private double[][] pathMatrice = 
 								   {
@@ -154,6 +155,9 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 			}
 			for (int j = 0; j < 16; j++)
 			{
+				/*
+				 * @Todo: Hier nicht bei 0 anfangen, sondern bei dx2 und dann vorne wieder anfangen.
+				 */
 				if (j >= dx1 -1 && j <= dx2 -1)
 				{
 					route.add(parent1.getRoute().get(j));
@@ -172,53 +176,6 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 				}
 			}
 			routeNew = route;
-			
-//			List<Integer> parent2Copy = new ArrayList<Integer>();
-//			for (int j = 0; j < 16; j++)
-//			{
-//				if (route.get(j) == -1)
-//				{	
-//					parent2Copy.add(parent2.getRoute().get(j));
-//				}
-//			}
-//			for (int j = 0; j < 16; j++)
-//			{
-//				if (route.get(j) == -1)
-//				{
-//					// Ersatz finden.
-//					boolean finisher = true;
-//					for (int z = 0; z < 16; z++)
-//					{
-//						int loc = (z+j)%parent2Copy.size();
-//						int potV = parent2Copy.get(loc);
-//						if (route.get(loc) == -1)
-//						{
-//							continue;
-//						}
-//						if (routeNew.contains(potV))
-//						{
-//							continue;
-//						}
-//						routeNew.add(potV);
-//						parent2Copy.remove(loc);
-//						finisher = false;
-//						break;
-//					}
-//					if (!finisher)
-//					{
-//						System.out.println("Kacke gelaufen");
-//					}
-//				} else {
-//					if (routeNew.contains(route.get(j)))
-//					{
-//						System.out.println("panic!!!! c " + j);
-//						System.out.println(Arrays.toString(parent2.getRoute().toArray()));
-//						System.out.println(Arrays.toString(route.toArray()));
-//						System.out.println(Arrays.toString(routeNew.toArray()));
-//					}
-//					routeNew.add(route.get(j));
-//				}
-//			}
 			child.setRoute(routeNew);
 			
 			// CrossOver Cuts here
@@ -230,17 +187,178 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 	}
 
 	@Override
-	public List<Tour> mutate(List<Tour> population) {
-		// TODO Auto-generated method stub
-		return population;
+	public List<Tour> mutate(List<Tour> children) {
+		Random rand = new Random();
+		for (Tour child : children)
+		{
+			double mutateChance = rand.nextDouble();
+			if (mutateChance < mutateBorder)
+			{
+				int pos1 = rand.nextInt(15) +1;
+				int pos2 = rand.nextInt(15) +1;
+				int swap = Math.min(pos1, pos2);
+				pos2 = Math.max(pos1, pos2);
+				pos1 = swap;
+				List<Integer> subList = new ArrayList<Integer>(child.getRoute());
+				subList = subList.subList(pos1 -1, pos2);
+				Collections.reverse(subList);
+				List<Integer> newRoute = new ArrayList<Integer>();
+				int copyCounter = 0;
+				for (int i = 0; i < 16; i++)
+				{
+					if (i >= pos1 -1 && i <= pos2-1)
+					{
+						newRoute.add(subList.get(copyCounter));
+						copyCounter++;
+					} else {
+						newRoute.add(child.getRoute().get(i));
+					}
+				}
+				List<Integer> newCuts = new ArrayList<Integer>();
+				for (int i = 0; i < 3; i++)
+				{
+					int r = (int) Math.round((rand.nextGaussian()-0.5)*2*mutationsReichweite);
+					newCuts.add(Math.min(8,Math.max(0,child.getCuts().get(i) + r)));
+				}
+				
+				// wenn new cuts illegal dann alte behalten
+				if (newCuts.get(0) + newCuts.get(1) + newCuts.get(2) > 8)
+				{
+					child.setCuts(newCuts);
+				} 
+			}
+		}
+		return children;
 	}
 
 	@Override
-	public List<Tour> localOptimization(List<Tour> population) {
-		// TODO Auto-generated method stub
-		return population;
-	}
+	public List<Tour> localOptimization(List<Tour> children) {
+		
+		for (Tour child : children)
+		{
+			boolean optimized = true;
+			while (optimized)
+			{
+				optimized = false;
+				
+				Tour optimizedChild = localOpt2Opt(child);
+				updateEntry(optimizedChild);
+				if (optimizedChild.getFitness() < child.getFitness())
+				{
+					child = optimizedChild;
+					optimized = true;
+					continue;
+				}
 
+				optimizedChild = localOpt2OptStar(child);
+				updateEntry(optimizedChild);
+				if (optimizedChild.getFitness() < child.getFitness())
+				{
+					child = optimizedChild;
+					optimized = true;
+					continue;
+				}
+
+				optimizedChild = localOptRelocate(child);
+				updateEntry(optimizedChild);
+				if (optimizedChild.getFitness() < child.getFitness())
+				{
+					child = optimizedChild;
+					optimized = true;
+					continue;
+				}
+
+				optimizedChild = localOptSwap(child);
+				updateEntry(optimizedChild);
+				if (optimizedChild.getFitness() < child.getFitness())
+				{
+					child = optimizedChild;
+					optimized = true;
+					continue;
+				}
+			}
+		}
+		return children;
+	}
+	
+	private Tour localOpt2Opt(Tour t)
+	{
+		Random rand = new Random();
+		int idx = rand.nextInt(t.getSubRoutes().size());
+		List<Integer> subRoute = t.getSubRoutes().get(idx);
+		
+		int pos1 = rand.nextInt(subRoute.size()) +1;
+		int pos2 = rand.nextInt(subRoute.size()) +1;
+		int swap = Math.min(pos1, pos2);
+		pos2 = Math.max(pos1, pos2);
+		pos1 = swap;
+		List<Integer> subList = subRoute.subList(pos1-1, pos2);
+		Collections.reverse(subList);
+		List<Integer> newRoute = new ArrayList<Integer>();
+		int copyCounter = 0;
+		for (int i = 0; i < subRoute.size(); i++)
+		{
+			if (i >= pos1 -1 && i <= pos2-1)
+			{
+				newRoute.add(subList.get(copyCounter));
+				copyCounter++;
+			} else {
+				newRoute.add(subRoute.get(i));
+			}
+		}
+		List<List<Integer>> subRoutes = new ArrayList<List<Integer>>();
+		for (int i = 0; i < t.getSubRoutes().size(); i++)
+		{
+			if (i == idx)
+			{
+				subRoutes.add(subRoute);
+			} else {
+				subRoutes.add(t.getSubRoutes().get(i));
+			}
+		}
+		Tour tmp = buildGlobalRoute(subRoutes);
+		return tmp;
+	}
+	
+	private Tour buildGlobalRoute(List<List<Integer>> subRoutes)
+	{
+		List<Integer> globalRoute = new ArrayList<Integer>();
+		List<Integer> cutList = new ArrayList<Integer>();
+		for (List<Integer> sub : subRoutes)
+		{
+			int cuts = 0;
+			for (Integer key : sub)
+			{
+				globalRoute.add(key);
+				cuts++;
+			}
+			cutList.add(cuts);
+		}
+		while(cutList.size() < 3)
+		{
+			cutList.add(0);
+		}
+		Tour t = new Tour();
+		t.setRoute(globalRoute);
+		t.setCuts(cutList);
+		return t;
+	}
+	
+	private Tour localOpt2OptStar(Tour t)
+	{
+		return t;
+	}
+	
+	private Tour localOptRelocate(Tour t)
+	{
+		return t;
+	}
+	
+	private Tour localOptSwap(Tour t)
+	{
+		return t;
+	}
+	
 	@Override
 	public List<Tour> selectNewPopulation(List<Tour> population) {
 		Collections.sort(population);
