@@ -1,12 +1,16 @@
 package tour.gui;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.lang.Thread.State;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -37,7 +41,7 @@ public class MainWindow extends JFrame {
 		setLayout(new BorderLayout());
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		JButton startButton = new JButton("Run - complete");
-		JButton init = new JButton("init");
+		JButton init = new JButton("Init - population");
 		JButton step = new JButton("do Step");
 		startButton.addActionListener(new ActionListener() {
 			@Override
@@ -56,8 +60,26 @@ public class MainWindow extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				handler.doStep();
-				Tour tour = handler.getPopulation().get(0);
-				printTour(tour);
+				List<Tour> pop = handler.getPopulation();
+				for (int i = 0; i < pop.size(); i++)
+				{
+					for (int j = 0; j < pop.size(); j++)
+					{
+						if (i != j)
+						{
+							if (pop.get(i).equals(pop.get(j)))
+							{
+								output.append("Duplikat gefunden!");
+							}
+						}
+						
+					}
+				}
+				
+//				for (Tour tour : handler.getPopulation())
+//				{
+//					printTour(tour); 
+//				}
 			}
 		});
 		
@@ -89,8 +111,12 @@ public class MainWindow extends JFrame {
 		});
 		
 		JPanel buttons = new JPanel();
-		buttons.setLayout(new BoxLayout(buttons, BoxLayout.Y_AXIS));
+		buttons.setLayout(new FlowLayout());
 		buttons.add(startButton);
+		startButton.setPreferredSize(new Dimension(200,30));
+		step.setPreferredSize(new Dimension(200,30));
+		init.setPreferredSize(new Dimension(200,30));
+		buttons.add(Box.createVerticalStrut(30));
 		buttons.add(init);
 		buttons.add(step);
 		JButton exit = new JButton("Exit");
@@ -102,7 +128,8 @@ public class MainWindow extends JFrame {
 			}
 		});
 		buttons.add(exit);
-		add(buttons,BorderLayout.WEST);
+		exit.setPreferredSize(new Dimension(200,30));
+		add(buttons,BorderLayout.NORTH);
 		add(jp, BorderLayout.CENTER);
 	}
 

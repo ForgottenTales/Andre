@@ -9,8 +9,8 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 
 	private int generationCounter = 0;
 	private static final int POP_SIZE = 20;
-	private double mutateBorder = 0.6;
 	private double mutationsReichweite = 2;
+	private double explorationRatio = 1;
 	
 	private double[][] pathMatrice = 
 								   {
@@ -81,13 +81,36 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 			population.add(tour);
 		}
 		
-		// @TODO: Hier 4 aus population nochmal lokal optimieren
+		List<Tour> newPop = new ArrayList<Tour>();
+		List<Tour> optis = new ArrayList<Tour>();
+		List<Integer> optiIDs = new ArrayList<Integer>();
+		for (int i = 0; i < 4; i++)
+		{
+			int idx = randomizer.nextInt(population.size());
+			optiIDs.add(idx);
+			Tour t = population.get(idx);
+			t = updateEntry(t);
+			optis.add(t);
+		}
+		optis = localOptimization(optis);
 		
-		return population;
+		int optiCounter = 0;
+		for (int i = 0; i < POP_SIZE; i++)
+		{
+			if (optiIDs.contains(i))
+			{
+				newPop.add(optis.get(optiCounter));
+				optiCounter++;
+			} else {
+				newPop.add(population.get(i));
+			}
+		}
+		
+		return newPop;
 	}
 
 	@Override
-	public List<Tour> chooseParents(List<Tour> population) 
+	public List<List<Tour>> chooseParents(List<Tour> population) 
 	{
 		Random randomizer = new Random();
 		double fitnessSum = 0;
@@ -96,6 +119,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		{
 			fitnessSum += key.getFitness();
 		}
+		List<Integer> parentIDs = new ArrayList<Integer>();
 		for (int u = 0; u < 2; u++)
 		{
 			double p = fitnessSum / 5.0; // hier verbunden mit
@@ -120,10 +144,23 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 				Tour parent = new Tour();
 				parent.setRoute(new ArrayList<>(population.get(i).getRoute()));
 				parent.setCuts(new ArrayList<>(population.get(i).getCuts()));
+				parentIDs.add(i);
 				parents.add(parent);
 			}
 		}
-		return parents;
+	
+		List<Tour> notParents = new ArrayList<Tour>();
+		for (int i = 0; i < population.size(); i++)
+		{
+			if (!parentIDs.contains(i))
+			{
+				notParents.add(population.get(i));
+			}
+		}
+		List<List<Tour>> pnp = new ArrayList<List<Tour>>();
+		pnp.add(parents);
+		pnp.add(notParents);
+		return pnp;
 	}
 
 	@Override
@@ -134,6 +171,16 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		{
 			Tour parent1 = parents.get(i);
 			Tour parent2 = parents.get(i+1);
+
+			double rekoChance = rand.nextDouble();
+			if ( rekoChance > explorationRatio*0.4)
+			{
+				Tour t = new Tour();
+				t.setRoute(new ArrayList<Integer>(parent1.getRoute()));
+				t.setCuts(new ArrayList<Integer>(parent1.getCuts()));
+				children.add(t);
+				continue;
+			}
 			
 			int dx1 = rand.nextInt(16);
 			int dx2 = rand.nextInt(16);
@@ -192,7 +239,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		for (Tour child : children)
 		{
 			double mutateChance = rand.nextDouble();
-			if (mutateChance < mutateBorder)
+			if (mutateChance < Math.max(0.0625,explorationRatio))
 			{
 				int pos1 = rand.nextInt(15) +1;
 				int pos2 = rand.nextInt(15) +1;
@@ -346,28 +393,207 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 	
 	private Tour localOpt2OptStar(Tour t)
 	{
-		return t;
+		if (t.getSubRoutes().size() < 2)
+		{
+			return t;
+		}
+		
+		Random rand = new Random();
+		int idx = rand.nextInt(t.getSubRoutes().size());
+		int idx2 = rand.nextInt(t.getSubRoutes().size());
+		while (idx == idx2)
+		{
+			idx2 = rand.nextInt(t.getSubRoutes().size());
+		}
+		List<Integer> subRoute1 = new ArrayList<>(t.getSubRoutes().get(idx));
+		List<Integer> subRoute2 = new ArrayList<>(t.getSubRoutes().get(idx2));
+		
+		int rand1 = rand.nextInt(subRoute1.size());
+		int rand2 = rand.nextInt(subRoute2.size());
+		
+		List<Integer> s1l = new ArrayList<>(subRoute1.subList(0, rand1));
+		List<Integer> s1r = new ArrayList<>(subRoute1.subList(rand1,subRoute1.size()));
+		List<Integer> s2l = new ArrayList<>(subRoute2.subList(0, rand2));
+		List<Integer> s2r = new ArrayList<>(subRoute2.subList(rand2,subRoute2.size()));
+		
+		s1l.addAll(new ArrayList<>(s2r));
+		s2l.addAll(new ArrayList<>(s1r));
+		
+		List<List<Integer>> subRoutes = new ArrayList<List<Integer>>();
+		for (int i = 0; i < t.getSubRoutes().size(); i++)
+		{
+			if (i == idx)
+			{
+				subRoutes.add(s1l);
+			} else if (i == idx2)
+			{
+				subRoutes.add(s2l);
+			} else {
+				subRoutes.add(new ArrayList<>(t.getSubRoutes().get(i)));
+			}
+		}
+
+		for (List<Integer> sub : subRoutes)
+		{
+			if (sub.size() > 8)
+			{
+				return t;
+			}
+		}
+		return buildGlobalRoute(subRoutes);
 	}
 	
 	private Tour localOptRelocate(Tour t)
 	{
-		return t;
+		if (t.getSubRoutes().size() < 2)
+		{
+			return t;
+		}
+		Random rand = new Random();
+		int idx = rand.nextInt(t.getSubRoutes().size());
+		List<Integer> subRoute = new ArrayList<>(t.getSubRoutes().get(idx));
+		
+		if (subRoute.size() < 3)
+		{
+			return t;
+		}
+		
+		int pos1 = rand.nextInt(subRoute.size());
+		int pos2 = rand.nextInt(subRoute.size());
+		while (pos1 == pos2)
+		{
+			pos2 = rand.nextInt(subRoute.size());
+		}
+		int swap = Math.min(pos1, pos2);
+		pos2 = Math.max(pos2, pos1);
+		pos1 = swap;
+
+		List<Integer> subLeft = new ArrayList<>(subRoute.subList(0, pos1));
+		List<Integer> subMid = new ArrayList<>(subRoute.subList(pos1,pos2));
+		List<Integer> subRight = new ArrayList<>(subRoute.subList(pos2,subRoute.size()));
+		
+		subLeft.addAll(subRight);	
+		int insertPos = rand.nextInt(subLeft.size());
+		
+		List<Integer> leftIns = new ArrayList<>(subLeft.subList(0, insertPos));
+		List<Integer> rightIns = new ArrayList<>(subLeft.subList(insertPos,subLeft.size()));
+		
+		List<Integer> newSubRoute = new ArrayList<Integer>();
+		newSubRoute.addAll(leftIns);
+		newSubRoute.addAll(subMid);
+		newSubRoute.addAll(rightIns);
+		
+		List<List<Integer>> subRoutes = new ArrayList<List<Integer>>();
+		for (int i = 0; i < t.getSubRoutes().size(); i++)
+		{
+			if (i == idx)
+			{
+				subRoutes.add(newSubRoute);
+			} else {
+				subRoutes.add(new ArrayList<>(t.getSubRoutes().get(i)));
+			}
+		}
+		return buildGlobalRoute(subRoutes);
 	}
 	
 	private Tour localOptSwap(Tour t)
 	{
-		return t;
-	}
+		if (t.getSubRoutes().size() < 2)
+		{
+			return t;
+		}
+		
+		Random rand = new Random();
+		int idx = rand.nextInt(t.getSubRoutes().size());
+		int idx2 = rand.nextInt(t.getSubRoutes().size());
+		while (idx == idx2)
+		{
+			idx2 = rand.nextInt(t.getSubRoutes().size());
+		}
+		List<Integer> subRoute1 = new ArrayList<>(t.getSubRoutes().get(idx));
+		List<Integer> subRoute2 = new ArrayList<>(t.getSubRoutes().get(idx2));
+		
+		int rand1 = rand.nextInt(subRoute1.size());
+		int rand2 = rand.nextInt(subRoute1.size());
 	
+		int swap = Math.min(rand1, rand2);
+		rand2 = Math.max(rand1, rand2);
+		rand1 = swap;
+		
+		List<Integer> subLeft = new ArrayList<>(subRoute1.subList(0, rand1));
+		List<Integer> subMid = new ArrayList<>(subRoute1.subList(rand1,rand2));
+		List<Integer> subRight = new ArrayList<>(subRoute1.subList(rand2,subRoute1.size()));
+		
+		subLeft.addAll(subRight);	
+		int insertPos = rand.nextInt(subRoute2.size());
+		
+		List<Integer> rl = new ArrayList<>(subRoute2.subList(0, insertPos));
+		List<Integer> rr = new ArrayList<>(subRoute2.subList(insertPos,subRoute2.size()));
+		
+		List<Integer> inserted = new ArrayList<>();
+		inserted.addAll(rl);
+		inserted.addAll(subMid);
+		inserted.addAll(rr);
+
+		if (inserted.size() > 8)
+		{
+			return t;
+		}
+
+		List<List<Integer>> subRoutes = new ArrayList<List<Integer>>();
+		for (int i = 0; i < t.getSubRoutes().size(); i++)
+		{
+			if (i == idx)
+			{
+				subRoutes.add(subLeft);
+			} else if (i == idx2)
+			{
+				subRoutes.add(inserted);
+			} else {
+				subRoutes.add(t.getSubRoutes().get(i));
+			}
+		}
+		return buildGlobalRoute(subRoutes);
+	}
+
 	@Override
-	public List<Tour> selectNewPopulation(List<Tour> population) {
-		Collections.sort(population);
-		return population.subList(0, 20);
+	public List<Tour> selectNewPopulation(List<Tour> parents, List<Tour> notParents, List<Tour> children)
+	{
+		List<Tour> newPop = new ArrayList<Tour>();
+		newPop.addAll(notParents);
+		
+		for (Tour key : children)
+		{
+			if (!newPop.contains(key))
+			{
+				newPop.add(key);
+			}
+		}
+	
+		Random randomizer = new Random();
+		int randNum = 20 - newPop.size();
+		List<Tour> parentsCopy = new ArrayList<Tour>(parents);
+		for (int i = 0; i < randNum; i++)
+		{
+			int r = randomizer.nextInt(parentsCopy.size());
+			Tour potTour = parentsCopy.get(r);
+			
+			if (!newPop.contains(potTour))
+			{
+				newPop.add(potTour);
+			} else {
+				i--;
+			}
+		}
+
+		// cos Exploration Ratio
+		explorationRatio = Math.cos(2.0*Math.PI*generationCounter/10000.0)/2.0 + 0.5;
+		return newPop;
 	}
 
 	@Override
 	public boolean isFinished(List<Tour> population) {
-		return generationCounter > 15000;
+		return generationCounter > 105000;
 	}
 
 	@Override
