@@ -48,7 +48,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 			Tour tour = new Tour();
 			List<Integer> currentRoute = new ArrayList<Integer>();
 			List<Integer> currentCuts = new ArrayList<Integer>();
-			// make multitourchromosome
+			// make multitour chromosome
 			for (int j = 0; j < 16; j++)
 			{
 				boolean found = false;
@@ -62,7 +62,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 					}
 				}
 			}
-			// make cutchromosome
+			// make cut chromosome
 			boolean isValidCutConfiguration = false;
 			while(!isValidCutConfiguration)
 			{
@@ -232,7 +232,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 			routeNew = route;
 			child.setRoute(routeNew);
 			
-			// recombination cuts here
+			// recombination cut chromosome here
 			child.setCuts(parent1.getCuts());
 			children.add(child);
 		}
@@ -250,6 +250,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 			double mutateChance = rand.nextDouble();
 			if (mutateChance < Math.max(0.0625,explorationRatio))
 			{
+				// start inverse mutation of multitour chromosome
 				int pos1 = rand.nextInt(15) +1;
 				int pos2 = rand.nextInt(15) +1;
 				int swap = Math.min(pos1, pos2);
@@ -271,13 +272,15 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 					}
 				}
 				List<Integer> newCuts = new ArrayList<Integer>();
+				
+				//mutate cut chromosome with gaussian function (0,2)
 				for (int i = 0; i < 3; i++)
 				{
 					int r = (int) Math.round((rand.nextGaussian()-0.5)*2*mutationsReichweite);
 					newCuts.add(Math.min(8,Math.max(0,child.getCuts().get(i) + r)));
 				}
 				
-				// wenn new cuts illegal dann alte behalten
+				// cut chromosome feasibility test
 				if (newCuts.get(0) + newCuts.get(1) + newCuts.get(2) > 8)
 				{
 					child.setCuts(newCuts);
@@ -287,6 +290,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		return children;
 	}
 
+	//start local opimization
 	@Override
 	public List<Tour> localOptimization(List<Tour> children) {
 		
@@ -297,6 +301,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 			{
 				optimized = false;
 				
+				//comparison ls-optimized Children with start children   
 				Tour optimizedChild = localOpt2Opt(child);
 				updateEntry(optimizedChild);
 				if (optimizedChild.getFitness() < child.getFitness())
@@ -306,6 +311,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 					continue;
 				}
 
+				//start 2-opt* procedure
 				optimizedChild = localOpt2OptStar(child);
 				updateEntry(optimizedChild);
 				if (optimizedChild.getFitness() < child.getFitness())
@@ -337,6 +343,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		return children;
 	}
 	
+	//start 2-opt procedure
 	private Tour localOpt2Opt(Tour t)
 	{
 		Random rand = new Random();
@@ -362,6 +369,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 				newRoute.add(subRoute.get(i));
 			}
 		}
+		// construct new multitour and cut chromosom
 		List<List<Integer>> subRoutes = new ArrayList<List<Integer>>();
 		for (int i = 0; i < t.getSubRoutes().size(); i++)
 		{
@@ -400,6 +408,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		return t;
 	}
 	
+	//start 2-opt* procedure
 	private Tour localOpt2OptStar(Tour t)
 	{
 		if (t.getSubRoutes().size() < 2)
@@ -452,6 +461,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		return buildGlobalRoute(subRoutes);
 	}
 	
+	//start Relocate procedure
 	private Tour localOptRelocate(Tour t)
 	{
 		if (t.getSubRoutes().size() < 2)
@@ -505,6 +515,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		return buildGlobalRoute(subRoutes);
 	}
 	
+	//start Swap procedure
 	private Tour localOptSwap(Tour t)
 	{
 		if (t.getSubRoutes().size() < 2)
