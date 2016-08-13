@@ -126,11 +126,11 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		//start SUS
 		for (int u = 0; u < 2; u++)
 		{
-			double p = fitnessSum / 5.0; // hier verbunden mit
+			double p = fitnessSum / 5.0; 
 			double start = randomizer.nextDouble()*p;
 			double[] pointers = 
 				{
-						start + 0*p, // da
+						start + 0*p, 
 						start + 1*p,
 						start + 2*p,
 						start + 3*p,
@@ -189,6 +189,8 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 				continue;
 			}
 			
+			// recombination multitour chromosome
+			// O-crossover
 			int dx1 = rand.nextInt(16);
 			int dx2 = rand.nextInt(16);
 			
@@ -230,7 +232,37 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 			child.setRoute(routeNew);
 			
 			// recombination cut chromosome here
-			child.setCuts(parent1.getCuts());
+			// 1 point crossover
+			int x = rand.nextInt(parent1.getCuts().size());
+			int y1 = 0,y2 = 0,y3 = 0; 
+			if (x == 0)
+			{
+				y1 = parent1.getCuts().get(x);
+				y2 = parent2.getCuts().get(1);
+				y3 = parent2.getCuts().get(2);
+			} else if (x == 1)
+			{
+				y1 = parent2.getCuts().get(0);
+				y2 = parent1.getCuts().get(x);
+				y3 = parent2.getCuts().get(2);
+			} else if (x == 2)
+			{
+				y1 = parent2.getCuts().get(0);
+				y2 = parent2.getCuts().get(1);
+				y3 = parent1.getCuts().get(x);
+			}
+			List<Integer> cuts = new ArrayList<Integer>();
+			cuts.add(y1);
+			cuts.add(y2);
+			cuts.add(y3);
+			// cut chromosome feasibility test
+			if (y1 + y2 + y3 > 8)
+			{
+				child.setCuts(cuts);
+			} else {
+				child.setCuts(new ArrayList<Integer>(parent1.getCuts()));
+			}
+			
 			children.add(child);
 		}
 		generationCounter++;
@@ -247,7 +279,8 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 			double mutateChance = rand.nextDouble();
 			if (mutateChance < Math.max(0.0625,explorationRatio))
 			{
-				// start inverse mutation of multitour chromosome
+				// start mutation of multitour chromosome
+				// inverse mutation
 				int pos1 = rand.nextInt(15) +1;
 				int pos2 = rand.nextInt(15) +1;
 				int swap = Math.min(pos1, pos2);
@@ -268,8 +301,9 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 						newRoute.add(child.getRoute().get(i));
 					}
 				}
-				List<Integer> newCuts = new ArrayList<Integer>();
 				
+				// Cut chromosome mutation
+				List<Integer> newCuts = new ArrayList<Integer>();
 				//mutate cut chromosome with gaussian function (0,2)
 				for (int i = 0; i < 3; i++)
 				{
@@ -308,7 +342,6 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 					continue;
 				}
 
-				//start 2-opt* procedure
 				optimizedChild = localOpt2OptStar(child);
 				updateEntry(optimizedChild);
 				if (optimizedChild.getFitness() < child.getFitness())
@@ -380,7 +413,8 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		Tour tmp = buildGlobalRoute(subRoutes);
 		return tmp;
 	}
-	
+
+	// generations global route out of multiple subRoutes
 	private Tour buildGlobalRoute(List<List<Integer>> subRoutes)
 	{
 		List<Integer> globalRoute = new ArrayList<Integer>();
@@ -613,6 +647,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		return generationCounter > 105000;
 	}
 
+	// Fitnessfunktion + sub routen erstellen
 	@Override
 	public Tour updateEntry(Tour entry) {
 		double value = 0;
