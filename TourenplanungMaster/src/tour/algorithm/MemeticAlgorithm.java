@@ -373,7 +373,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		return children;
 	}
 	
-	//start 2-opt procedure
+	//start 2-opt procedure with splitting in subroutes
 	private Tour localOpt2Opt(Tour t)
 	{
 		Random rand = new Random();
@@ -439,7 +439,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		return t;
 	}
 	
-	//start 2-opt* procedure
+	//start 2-opt* procedure with splitting in subroutes
 	private Tour localOpt2OptStar(Tour t)
 	{
 		if (t.getSubRoutes().size() < 2)
@@ -482,6 +482,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 			}
 		}
 
+		// construct new multitour and cut chromosom
 		for (List<Integer> sub : subRoutes)
 		{
 			if (sub.size() > 8)
@@ -492,7 +493,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		return buildGlobalRoute(subRoutes);
 	}
 	
-	//start Relocate procedure
+	//start Relocate procedure with splitting in subroutes
 	private Tour localOptRelocate(Tour t)
 	{
 		if (t.getSubRoutes().size() < 2)
@@ -533,6 +534,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		newSubRoute.addAll(subMid);
 		newSubRoute.addAll(rightIns);
 		
+		// construct new multitour and cut chromosom
 		List<List<Integer>> subRoutes = new ArrayList<List<Integer>>();
 		for (int i = 0; i < t.getSubRoutes().size(); i++)
 		{
@@ -546,7 +548,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		return buildGlobalRoute(subRoutes);
 	}
 	
-	//start Swap procedure
+	//start Swap procedure with splitting in subroutes
 	private Tour localOptSwap(Tour t)
 	{
 		if (t.getSubRoutes().size() < 2)
@@ -591,6 +593,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 			return t;
 		}
 
+		// construct new multitour and cut chromosom
 		List<List<Integer>> subRoutes = new ArrayList<List<Integer>>();
 		for (int i = 0; i < t.getSubRoutes().size(); i++)
 		{
@@ -607,12 +610,15 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		return buildGlobalRoute(subRoutes);
 	}
 
+	//select new Population of not parents, children and parents
 	@Override
 	public List<Tour> selectNewPopulation(List<Tour> parents, List<Tour> notParents, List<Tour> children)
 	{
+		//choose all not parents for new population
 		List<Tour> newPop = new ArrayList<Tour>();
 		newPop.addAll(notParents);
 		
+		//duplicate check children
 		for (Tour key : children)
 		{
 			if (!newPop.contains(key))
@@ -621,6 +627,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 			}
 		}
 	
+		//random parent selection for new population
 		Random randomizer = new Random();
 		int randNum = 20 - newPop.size();
 		List<Tour> parentsCopy = new ArrayList<Tour>(parents);
@@ -628,7 +635,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		{
 			int r = randomizer.nextInt(parentsCopy.size());
 			Tour potTour = parentsCopy.get(r);
-			
+			//duplicate check parents 
 			if (!newPop.contains(potTour))
 			{
 				newPop.add(potTour);
@@ -637,11 +644,12 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 			}
 		}
 
-		// cos Exploration Ratio
+		//cos Exploration Ratio
 		explorationRatio = Math.cos(2.0*Math.PI*generationCounter/10000.0)/2.0 + 0.5;
 		return newPop;
 	}
 
+	//termination condition
 	@Override
 	public boolean isFinished(List<Tour> population) {
 		return generationCounter > 105000;
@@ -729,6 +737,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 				}
 			}
 		}
+	
 		entry.setPenaltySum(0);
 		double penaltySum = 0;
 		for (int i = 0; i < subRouteSums.length; i++)
