@@ -33,6 +33,7 @@ public class MainWindow extends JFrame {
 	AlgorithmHandler handler = new AlgorithmHandler(algorithm);
 
 	public MainWindow() {
+		this.setExtendedState(JFrame.MAXIMIZED_BOTH); 
 		setTitle("TourPlaner - Master Andre");
 		setSize(600, 500);
 		setVisible(true);

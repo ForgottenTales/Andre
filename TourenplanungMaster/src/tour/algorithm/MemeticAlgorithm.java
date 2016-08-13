@@ -180,7 +180,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 			Tour parent2 = parents.get(i+1);
 
 			double rekoChance = rand.nextDouble();
-			if ( rekoChance > explorationRatio*0.4)
+			if (rekoChance > explorationRatio*0.4)
 			{
 				Tour t = new Tour();
 				t.setRoute(new ArrayList<Integer>(parent1.getRoute()));
@@ -195,26 +195,23 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 			int swap = Math.min(dx1, dx2);
 			dx2 = Math.max(dx1, dx2);
 			dx1 = swap;
-			
+		
+			List<Integer> midPart = new ArrayList<>(parent1.getRoute().subList(dx1, dx2));
 			Tour child = new Tour();
 			List<Integer> route = new ArrayList<Integer>();
 			List<Integer> routeNew = new ArrayList<Integer>();
 			List<Integer> donts = new ArrayList<Integer>();
-			for (int j = 0; j < 16; j++)
+			for (Integer key : midPart)
 			{
-				if (j >= dx1 -1 && j <= dx2 -1)
-				{
-					donts.add(parent1.getRoute().get(j));
-				} 
+				donts.add(key);
 			}
+			int midCounter = 0;
 			for (int j = 0; j < 16; j++)
 			{
-				/*
-				 * @Todo: Hier nicht bei 0 anfangen, sondern bei dx2 und dann vorne wieder anfangen.
-				 */
-				if (j >= dx1 -1 && j <= dx2 -1)
+				if (j >= dx1 && j <  dx2 )
 				{
-					route.add(parent1.getRoute().get(j));
+					route.add(midPart.get(midCounter));
+					midCounter++;
 				} else {
 					for (int u = 0; u < 16; u++)
 					{
