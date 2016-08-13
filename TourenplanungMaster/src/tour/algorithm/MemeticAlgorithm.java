@@ -579,12 +579,15 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		return buildGlobalRoute(subRoutes);
 	}
 
+	//select new Population of not parents, children and parents
 	@Override
 	public List<Tour> selectNewPopulation(List<Tour> parents, List<Tour> notParents, List<Tour> children)
 	{
+		//choose all not parents for new population
 		List<Tour> newPop = new ArrayList<Tour>();
 		newPop.addAll(notParents);
 		
+		//duplicate check children
 		for (Tour key : children)
 		{
 			if (!newPop.contains(key))
@@ -593,6 +596,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 			}
 		}
 	
+		//random parent selection for new population
 		Random randomizer = new Random();
 		int randNum = 20 - newPop.size();
 		List<Tour> parentsCopy = new ArrayList<Tour>(parents);
@@ -600,7 +604,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		{
 			int r = randomizer.nextInt(parentsCopy.size());
 			Tour potTour = parentsCopy.get(r);
-			
+			//duplicate check parents 
 			if (!newPop.contains(potTour))
 			{
 				newPop.add(potTour);
@@ -609,16 +613,18 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 			}
 		}
 
-		// cos Exploration Ratio
+		//cos Exploration Ratio
 		explorationRatio = Math.cos(2.0*Math.PI*generationCounter/10000.0)/2.0 + 0.5;
 		return newPop;
 	}
 
+	//termination condition
 	@Override
 	public boolean isFinished(List<Tour> population) {
 		return generationCounter > 105000;
 	}
 
+	//update 
 	@Override
 	public Tour updateEntry(Tour entry) {
 		double value = 0;
@@ -700,6 +706,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 				}
 			}
 		}
+	
 		entry.setPenaltySum(0);
 		double penaltySum = 0;
 		for (int i = 0; i < subRouteSums.length; i++)
