@@ -343,7 +343,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		return children;
 	}
 	
-	//start 2-opt procedure
+	//start 2-opt procedure with splitting in subroutes
 	private Tour localOpt2Opt(Tour t)
 	{
 		Random rand = new Random();
@@ -408,7 +408,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		return t;
 	}
 	
-	//start 2-opt* procedure
+	//start 2-opt* procedure with splitting in subroutes
 	private Tour localOpt2OptStar(Tour t)
 	{
 		if (t.getSubRoutes().size() < 2)
@@ -451,6 +451,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 			}
 		}
 
+		// construct new multitour and cut chromosom
 		for (List<Integer> sub : subRoutes)
 		{
 			if (sub.size() > 8)
@@ -461,7 +462,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		return buildGlobalRoute(subRoutes);
 	}
 	
-	//start Relocate procedure
+	//start Relocate procedure with splitting in subroutes
 	private Tour localOptRelocate(Tour t)
 	{
 		if (t.getSubRoutes().size() < 2)
@@ -502,6 +503,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		newSubRoute.addAll(subMid);
 		newSubRoute.addAll(rightIns);
 		
+		// construct new multitour and cut chromosom
 		List<List<Integer>> subRoutes = new ArrayList<List<Integer>>();
 		for (int i = 0; i < t.getSubRoutes().size(); i++)
 		{
@@ -515,7 +517,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		return buildGlobalRoute(subRoutes);
 	}
 	
-	//start Swap procedure
+	//start Swap procedure with splitting in subroutes
 	private Tour localOptSwap(Tour t)
 	{
 		if (t.getSubRoutes().size() < 2)
@@ -560,6 +562,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 			return t;
 		}
 
+		// construct new multitour and cut chromosom
 		List<List<Integer>> subRoutes = new ArrayList<List<Integer>>();
 		for (int i = 0; i < t.getSubRoutes().size(); i++)
 		{
