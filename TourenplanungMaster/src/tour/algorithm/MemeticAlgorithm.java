@@ -12,7 +12,8 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 	private double mutationsReichweite = 2;
 	private double explorationRatio = 1;
 	
-	private double[][] pathMatrice = 
+	// insertion VRPTW structure 
+	private double[][] pathMatrice =    
 								   {
 								   {0,4.5,4,3.5,3,2.5,3,3.5,4,3.5,3,2.5,2,3,3.5,4,4.5},
 								   {4.5,0,0.5,1,1.5,3.5,3,2.5,2,2.5,3,3.5,4,5,4.5,4,3.5},
@@ -30,14 +31,14 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 								   {3,5,4.5,4,3.5,3,3.5,4,4.5,4,3.5,3,2.5,0,0.5,1,1.5},
 								   {3.5,4.5,5,4.5,4,3.5,4,4.5,4,3.5,4,3.5,3,0.5,0,0.5,1},
 								   {4,4,4.5,5,4.5,4,4.5,4,3.5,3,3.5,4,3.5,1,0.5,0,0.5},
-								   {4.5,3.5,4,4.5,5,4.5,4,3.5,3,2.5,3,3.5,4,1.5,1,0.5,0} //hat bis jetzt gefehlt. 
-								   													     //Warum hat die Berechnung trotzdem funktioniert?
+								   {4.5,3.5,4,4.5,5,4.5,4,3.5,3,2.5,3,3.5,4,1.5,1,0.5,0} 
 								   };
 	
 	private double[] comTimes = {6,6,6,6,5,5,5,5,4,4,4,4,2,2,2,2};
 	
 	private double[] maxTimes = {38,20,32,50,25,39,36,54,30,39,23,20,51,41,40,25};
 	
+	// create starting population
 	@Override
 	public List<Tour> createStartingPopulation() {
 		List<Tour> population = new ArrayList<Tour>();
@@ -47,6 +48,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 			Tour tour = new Tour();
 			List<Integer> currentRoute = new ArrayList<Integer>();
 			List<Integer> currentCuts = new ArrayList<Integer>();
+			// make multitourchromosome
 			for (int j = 0; j < 16; j++)
 			{
 				boolean found = false;
@@ -60,7 +62,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 					}
 				}
 			}
-			
+			// make cutchromosome
 			boolean isValidCutConfiguration = false;
 			while(!isValidCutConfiguration)
 			{
@@ -80,7 +82,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 			tour.setCuts(currentCuts);
 			population.add(tour);
 		}
-		
+		// local optimization of 4 random individuals 
 		List<Tour> newPop = new ArrayList<Tour>();
 		List<Tour> optis = new ArrayList<Tour>();
 		List<Integer> optiIDs = new ArrayList<Integer>();
@@ -109,6 +111,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		return newPop;
 	}
 
+	// selection process with SUS for recombination
 	@Override
 	public List<List<Tour>> chooseParents(List<Tour> population) 
 	{
@@ -120,6 +123,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 			fitnessSum += key.getFitness();
 		}
 		List<Integer> parentIDs = new ArrayList<Integer>();
+		//start SUS
 		for (int u = 0; u < 2; u++)
 		{
 			double p = fitnessSum / 5.0; // hier verbunden mit
@@ -149,6 +153,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 			}
 		}
 	
+		//definition of not selected parents 
 		List<Tour> notParents = new ArrayList<Tour>();
 		for (int i = 0; i < population.size(); i++)
 		{
@@ -163,10 +168,12 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		return pnp;
 	}
 
+	// recombination process
 	@Override
 	public List<Tour> makeChildren(List<Tour> parents) {
 		Random rand = new Random();
 		List<Tour> children = new ArrayList<Tour>();
+		// choose 2 parents and recombinate with probability ratio between 0.6 and 1 
 		for (int i = 0; i < parents.size(); i = i +2 )
 		{
 			Tour parent1 = parents.get(i);
@@ -225,7 +232,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 			routeNew = route;
 			child.setRoute(routeNew);
 			
-			// CrossOver Cuts here
+			// recombination cuts here
 			child.setCuts(parent1.getCuts());
 			children.add(child);
 		}
@@ -233,9 +240,11 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		return children;
 	}
 
+	//mutation children
 	@Override
 	public List<Tour> mutate(List<Tour> children) {
 		Random rand = new Random();
+		//select all children and mutate with probability ratio between 0.0625 and 1   
 		for (Tour child : children)
 		{
 			double mutateChance = rand.nextDouble();
