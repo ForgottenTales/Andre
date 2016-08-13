@@ -661,6 +661,8 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		double value = 0;
 		List<Integer> globalRoute = new ArrayList<Integer>(entry.getRoute());
 		List<List<Integer>> subRoutes = new ArrayList<List<Integer>>();
+		
+		// cut global route into multiple subRoutes
 		for (int cut : entry.getCuts())
 		{
 			if (globalRoute.size() > cut)
@@ -695,6 +697,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 		double[] subRoutePenalty = new double[entry.getSubRoutes().size()];
 		double[] values = new double[entry.getSubRoutes().size()];
 		
+		// calculate commission time
 		for (int i = 0; i < subRouteSums.length; i++)
 		{
 			subRouteSums[i] = 0;
@@ -705,6 +708,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 				subRouteSums[i] += comTimes[key-1];
 			}
 		}
+		
 		int length = subRouteSums.length;
 		if (length == 3)
 		{
@@ -737,7 +741,8 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 				}
 			}
 		}
-	
+
+		// determine penalty value for each subRoute
 		entry.setPenaltySum(0);
 		double penaltySum = 0;
 		for (int i = 0; i < subRouteSums.length; i++)
@@ -758,6 +763,7 @@ public class MemeticAlgorithm implements IAlgorithm<Tour> {
 			entry.setPenaltySum(entry.getPenaltySum() + subRoutePenalty[i]);
 		}
 		
+		// only consider latest arriving subRoute
 		double maxSum = Double.MIN_VALUE; 
 		for (int i = 0; i < length; i++)
 		{

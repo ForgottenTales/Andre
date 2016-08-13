@@ -9,14 +9,6 @@ public class AlgorithmHandler {
 	private List<Tour> population = null;
 	private Tour best = null;
 	
-	public Tour getBest() {
-		return best;
-	}
-
-	public void setBest(Tour best) {
-		this.best = best;
-	}
-
 	public AlgorithmHandler(IAlgorithm<Tour> algorithm)
 	{
 		this.algorithm = algorithm;
@@ -26,6 +18,14 @@ public class AlgorithmHandler {
 			algorithm.updateEntry(key);
 		}
 	}
+	
+	public Tour getBest() {
+		return best;
+	}
+
+	public void setBest(Tour best) {
+		this.best = best;
+	}
 
 	public Tour findBestSolution()
 	{
@@ -33,8 +33,6 @@ public class AlgorithmHandler {
 		{
 			doStep();
 		}
-		Collections.sort(population);
-		// Finde bestes Individuum
 		return best;
 	}
 	
